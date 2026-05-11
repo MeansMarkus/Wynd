@@ -19,14 +19,17 @@ def main():
 
     clock = pygame.time.Clock()
     running = True
+    selected = None
 
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                selected = renderer.square_from_mouse(event.pos)
 
         screen.fill((20, 20, 20))
-        renderer.draw(screen)
+        renderer.draw(screen, selected=selected)
         pygame.display.flip()
         clock.tick(60)
 
