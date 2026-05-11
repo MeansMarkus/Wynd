@@ -1,4 +1,4 @@
-# TimeTwin — AI Watch Discovery Platform
+# Wynd — AI Watch Discovery Platform
 
 Build a modern full-stack web application called “Wynd”.
 
