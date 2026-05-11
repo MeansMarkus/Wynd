@@ -20,13 +20,33 @@ def main():
     clock = pygame.time.Clock()
     running = True
     selected = None
+    turn = "white"
 
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                selected = renderer.square_from_mouse(event.pos)
+                clicked = renderer.square_from_mouse(event.pos)
+                if clicked is None:
+                    selected = None
+                    continue
+
+                if selected is None:
+                    piece = board.get_piece(clicked[0], clicked[1])
+                    if piece and piece.color == turn:
+                        selected = clicked
+                    else:
+                        selected = None
+                else:
+                    start = board.coords_to_square(selected[0], selected[1])
+                    end = board.coords_to_square(clicked[0], clicked[1])
+                    try:
+                        board.move_piece(start, end, turn)
+                        turn = "black" if turn == "white" else "white"
+                    except ValueError:
+                        pass
+                    selected = None
 
         screen.fill((20, 20, 20))
         renderer.draw(screen, selected=selected)
