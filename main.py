@@ -1,38 +1,38 @@
+from cards.card import Deck
+from cards.plus_four import PlusFourCard
+from cards.plus_two import PlusTwoCard
+from cards.reverse import ReverseCard
+from cards.skip import SkipCard
 from game.board import Board
+from game.game_manager import GameManager
+from game.game_state import GameState
+from game.turn_manager import TurnManager
+from players.player import Player
+
+
+def build_deck():
+    cards = []
+    cards.extend(ReverseCard() for _ in range(4))
+    cards.extend(SkipCard() for _ in range(4))
+    cards.extend(PlusTwoCard() for _ in range(4))
+    cards.extend(PlusFourCard() for _ in range(2))
+    return Deck(cards)
 
 
 def main():
     board = Board()
     board.setup_initial()
-    turn = "white"
 
-    while True:
-        print(board.render())
-        if board.is_checkmate(turn):
-            print(f"Checkmate! {turn} loses.")
-            break
-        if board.is_stalemate(turn):
-            print("Stalemate.")
-            break
-        if board.is_in_check(turn):
-            print("Check!")
+    players = [Player("White", "white"), Player("Black", "black")]
+    turn_manager = TurnManager(players)
+    deck = build_deck()
 
-        move_input = input(f"{turn} move (e2 e4) or 'quit': ").strip()
-        if move_input.lower() in ("quit", "exit"):
-            break
+    for player in players:
+        player.draw(deck, count=3)
 
-        parts = move_input.split()
-        if len(parts) != 2:
-            print("Enter moves like: e2 e4")
-            continue
-
-        try:
-            board.move_piece(parts[0], parts[1], turn)
-        except ValueError as exc:
-            print(exc)
-            continue
-
-        turn = "black" if turn == "white" else "white"
+    state = GameState(board, players, turn_manager, deck)
+    manager = GameManager(state)
+    manager.run()
 
 
 if __name__ == "__main__":
