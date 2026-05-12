@@ -29,6 +29,8 @@ def main():
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_f:
+                print(board.to_fen(turn))
             if is_checkmate:
                 continue
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -54,6 +56,7 @@ def main():
                     selected = None
 
         status_lines = []
+        status_lines.append(f"Legal moves: {board.count_legal_moves(turn)}")
         if is_checkmate:
             winner = "white" if turn == "black" else "black"
             status_lines.append(f"Checkmate: {winner} wins")

@@ -197,8 +197,8 @@ class Board:
             if (end_row, end_col) == previous_en_passant and self.get_piece(end_row, end_col) is None:
                 captured_row = end_row - direction
                 self.set_piece(captured_row, end_col, None)
-            capture = True
-            en_passant_capture = True
+                capture = True
+                en_passant_capture = True
 
         self.set_piece(end_row, end_col, piece)
         self.set_piece(start_row, start_col, None)
@@ -266,6 +266,15 @@ class Board:
                         return True
         return False
 
+    def count_legal_moves(self, color):
+        total = 0
+        for row in range(self.size):
+            for col in range(self.size):
+                piece = self.get_piece(row, col)
+                if piece and piece.color == color:
+                    total += len(self.get_legal_moves_for_piece((row, col)))
+        return total
+
     def is_checkmate(self, color):
         return self.is_in_check(color) and not self.has_legal_moves(color)
 
@@ -309,6 +318,32 @@ class Board:
         if self.en_passant_target:
             en_passant = self.coords_to_square(self.en_passant_target[0], self.en_passant_target[1])
         return f"{piece_layout} {turn[0]} {rights} {en_passant}"
+
+    def to_fen(self, turn):
+        rows = []
+        for row in self.grid:
+            empty = 0
+            parts = []
+            for piece in row:
+                if piece is None:
+                    empty += 1
+                else:
+                    if empty:
+                        parts.append(str(empty))
+                        empty = 0
+                    parts.append(piece.get_symbol())
+            if empty:
+                parts.append(str(empty))
+            rows.append("".join(parts))
+
+        piece_layout = "/".join(rows)
+        rights = self._castling_rights()
+        en_passant = "-"
+        if self.en_passant_target:
+            en_passant = self.coords_to_square(self.en_passant_target[0], self.en_passant_target[1])
+
+        fullmove = (len(self.move_history) // 2) + 1
+        return f"{piece_layout} {turn[0]} {rights} {en_passant} {self.halfmove_clock} {fullmove}"
 
     def record_position(self, turn):
         key = self._position_key(turn)
