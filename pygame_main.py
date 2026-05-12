@@ -13,8 +13,10 @@ def main():
     board.setup_initial()
     renderer = Renderer(board)
 
-    window_size = renderer.margin * 2 + board.size * renderer.cell_size
-    screen = pygame.display.set_mode((window_size, window_size))
+    board_pixels = board.size * renderer.cell_size
+    window_width = renderer.margin * 2 + board_pixels + 220
+    window_height = renderer.margin * 2 + board_pixels
+    screen = pygame.display.set_mode((window_width, window_height))
     pygame.display.set_caption("Chaos Chess")
 
     clock = pygame.time.Clock()
@@ -23,9 +25,12 @@ def main():
     turn = "white"
 
     while running:
+        is_checkmate = board.is_checkmate(turn)
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
+            if is_checkmate:
+                continue
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 clicked = renderer.square_from_mouse(event.pos)
                 if clicked is None:
@@ -48,8 +53,21 @@ def main():
                         pass
                     selected = None
 
+        status_lines = []
+        if is_checkmate:
+            winner = "white" if turn == "black" else "black"
+            status_lines.append(f"Checkmate: {winner} wins")
+        elif board.is_in_check(turn):
+            status_lines.append("Check")
+
         screen.fill((20, 20, 20))
-        renderer.draw(screen, selected=selected, turn=turn)
+        renderer.draw(
+            screen,
+            selected=selected,
+            turn=turn,
+            status_lines=status_lines,
+            moves=board.move_history,
+        )
         pygame.display.flip()
         clock.tick(60)
 

@@ -16,8 +16,9 @@ class Renderer:
         self.font = pygame.font.SysFont("Segoe UI", 36, bold=True)
         self.status_font = pygame.font.SysFont("Segoe UI", 20, bold=True)
 
-    def draw(self, screen, selected=None, turn=None):
-        self._draw_status(screen, turn)
+    def draw(self, screen, selected=None, turn=None, status_lines=None, moves=None):
+        self._draw_status(screen, turn, status_lines)
+        self._draw_moves(screen, moves)
         board_size = self.board.size
         for row in range(board_size):
             for col in range(board_size):
@@ -52,11 +53,41 @@ class Renderer:
                         screen.blit(outline, outline_rect.move(1, 1))
                     screen.blit(label, label_rect)
 
-    def _draw_status(self, screen, turn):
-        if not turn:
+    def _draw_status(self, screen, turn, status_lines):
+        y = 10
+        if turn:
+            label = self.status_font.render(f"Turn: {turn}", True, (230, 230, 230))
+            screen.blit(label, (self.margin, y))
+            y += 22
+
+        if status_lines:
+            for line in status_lines:
+                label = self.status_font.render(line, True, (230, 230, 230))
+                screen.blit(label, (self.margin, y))
+                y += 22
+
+    def _draw_moves(self, screen, moves):
+        if not moves:
             return
-        label = self.status_font.render(f"Turn: {turn}", True, (230, 230, 230))
-        screen.blit(label, (self.margin, 10))
+
+        max_lines = 12
+        recent = moves[-max_lines:]
+        x = self.margin + self.board.size * self.cell_size + 10
+        y = self.margin
+
+        title = self.status_font.render("Moves", True, (230, 230, 230))
+        screen.blit(title, (x, y))
+        y += 22
+
+        start_index = len(moves) - len(recent)
+        for idx, move in enumerate(recent, start=start_index + 1):
+            if isinstance(move, dict):
+                text = f"{idx}. {move['start']}-{move['end']}"
+            else:
+                text = f"{idx}. {move}"
+            label = self.status_font.render(text, True, (230, 230, 230))
+            screen.blit(label, (x, y))
+            y += 20
 
     def square_from_mouse(self, pos):
         x, y = pos
