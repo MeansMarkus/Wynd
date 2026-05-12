@@ -2,8 +2,25 @@ import sys
 
 import pygame
 
+from cards.card import Deck
+from cards.plus_four import PlusFourCard
+from cards.plus_two import PlusTwoCard
+from cards.reverse import ReverseCard
+from cards.skip import SkipCard
 from game.board import Board
+from game.game_state import GameState
+from game.turn_manager import TurnManager
+from players.player import Player
 from ui.renderer import Renderer
+
+
+def build_deck():
+    cards = []
+    cards.extend(ReverseCard() for _ in range(4))
+    cards.extend(SkipCard() for _ in range(4))
+    cards.extend(PlusTwoCard() for _ in range(4))
+    cards.extend(PlusFourCard() for _ in range(2))
+    return Deck(cards)
 
 
 def main():
@@ -13,8 +30,13 @@ def main():
     board.setup_initial()
     renderer = Renderer(board)
 
+    players = [Player("White", "white"), Player("Black", "black")]
+    turn_manager = TurnManager(players)
+    deck = build_deck()
+    state = GameState(board, players, turn_manager, deck)
+
     board_pixels = board.size * renderer.cell_size
-    window_width = renderer.margin * 2 + board_pixels + 220
+    window_width = renderer.margin * 2 + board_pixels + renderer.panel_width
     window_height = renderer.margin * 2 + board_pixels
     screen = pygame.display.set_mode((window_width, window_height))
     pygame.display.set_caption("Chaos Chess")
@@ -22,10 +44,18 @@ def main():
     clock = pygame.time.Clock()
     running = True
     selected = None
-    turn = "white"
+    selected_card_index = None
+    turn_started = True
 
     while running:
+        player = turn_manager.current_player()
+        turn = player.color
         is_checkmate = board.is_checkmate(turn)
+        if turn_started:
+            if len(player.hand) < 5:
+                player.draw(deck)
+            turn_started = False
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
@@ -34,6 +64,31 @@ def main():
             if is_checkmate:
                 continue
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                hand_start_y = renderer.last_hand_start_y
+                if hand_start_y is not None and renderer.play_button_hit(
+                    event.pos, len(player.hand), hand_start_y
+                ):
+                    if selected_card_index is not None:
+                        try:
+                            player.play_card(selected_card_index, state)
+                        except ValueError:
+                            pass
+                        selected_card_index = None
+                        turn_manager.advance()
+                        turn_started = True
+                        selected = None
+                        continue
+
+                card_index = None
+                if hand_start_y is not None:
+                    card_index = renderer.card_at_pos(event.pos, len(player.hand), hand_start_y)
+                if card_index is not None:
+                    if selected_card_index == card_index:
+                        selected_card_index = None
+                    else:
+                        selected_card_index = card_index
+                    continue
+
                 clicked = renderer.square_from_mouse(event.pos)
                 if clicked is None:
                     selected = None
@@ -50,7 +105,8 @@ def main():
                     end = board.coords_to_square(clicked[0], clicked[1])
                     try:
                         board.move_piece(start, end, turn)
-                        turn = "black" if turn == "white" else "white"
+                        turn_manager.advance()
+                        turn_started = True
                     except ValueError:
                         pass
                     selected = None
@@ -70,6 +126,9 @@ def main():
             turn=turn,
             status_lines=status_lines,
             moves=board.move_history,
+            hand=player.hand,
+            selected_card_index=selected_card_index,
+            show_play=True,
         )
         pygame.display.flip()
         clock.tick(60)
