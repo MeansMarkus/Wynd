@@ -3,6 +3,7 @@ import sys
 import pygame
 
 from cards.card import Deck
+from cards.number import NumberCard
 from cards.plus_two import PlusTwoCard
 from cards.reverse import ReverseCard
 from game.board import Board
@@ -14,8 +15,10 @@ from ui.renderer import Renderer
 
 def build_deck():
     cards = []
-    cards.extend(ReverseCard() for _ in range(4))
-    cards.extend(PlusTwoCard() for _ in range(4))
+    cards.extend(ReverseCard() for _ in range(2))
+    cards.extend(PlusTwoCard() for _ in range(3))
+    for number in range(1, 6):
+        cards.extend(NumberCard(number) for _ in range(2))
     return Deck(cards)
 
 
