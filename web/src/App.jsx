@@ -151,6 +151,18 @@ export default function App() {
     setDragging(null);
   };
 
+  useEffect(() => {
+    if (!dragging) return undefined;
+    const onMove = (event) => handlePointerMove(event);
+    const onUp = (event) => handlePointerUp(event);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [dragging]);
+
   if (!state) {
     return (
       <div className="loading">
@@ -178,13 +190,7 @@ export default function App() {
       </header>
 
       <main className="layout">
-        <section
-          className="board"
-          ref={boardRef}
-          onPointerMove={handlePointerMove}
-          onPointerUp={handlePointerUp}
-          onPointerLeave={handlePointerUp}
-        >
+        <section className="board" ref={boardRef}>
           {board.map((row, r) => (
             <div key={r} className="board-row">
               {row.map((cell, c) => {
@@ -198,6 +204,7 @@ export default function App() {
                     }`}
                     onClick={() => handleSquareClick(r, c)}
                     onPointerDown={(event) => handlePointerDown(r, c, cell, event)}
+                    onPointerUp={handlePointerUp}
                   >
                     {cell && (
                       <img

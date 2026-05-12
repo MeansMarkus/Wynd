@@ -119,14 +119,18 @@ async def websocket_endpoint(websocket: WebSocket):
         await websocket.send_text(json.dumps({"type": "state", "state": serialize_state()}))
         while True:
             raw = await websocket.receive_text()
-            data = json.loads(raw)
-            if data.get("type") == "move":
-                apply_move(data.get("start"), data.get("end"))
-            elif data.get("type") == "play_card":
-                apply_card(int(data.get("index")))
-            await manager.broadcast({"type": "state", "state": serialize_state()})
+            try:
+                data = json.loads(raw)
+                if data.get("type") == "move":
+                    apply_move(data.get("start"), data.get("end"))
+                elif data.get("type") == "play_card":
+                    apply_card(int(data.get("index")))
+                await manager.broadcast({"type": "state", "state": serialize_state()})
+            except ValueError as exc:
+                await websocket.send_text(json.dumps({"type": "error", "message": str(exc)}))
+            except Exception:
+                await websocket.send_text(json.dumps({"type": "error", "message": "Invalid request"}))
     except WebSocketDisconnect:
         manager.disconnect(websocket)
-    except Exception as exc:
-        await websocket.send_text(json.dumps({"type": "error", "message": str(exc)}))
+    except Exception:
         manager.disconnect(websocket)
