@@ -17,6 +17,7 @@ class Board:
         self.move_history = []
         self.halfmove_clock = 0
         self.position_counts = {}
+        self.captured = {"white": [], "black": []}
 
     def setup_initial(self):
         self.grid = [[None for _ in range(self.size)] for _ in range(self.size)]
@@ -24,6 +25,7 @@ class Board:
         self.move_history = []
         self.halfmove_clock = 0
         self.position_counts = {}
+        self.captured = {"white": [], "black": []}
 
         order = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
         for col, piece_type in enumerate(order):
@@ -170,7 +172,8 @@ class Board:
         if piece is None:
             return
 
-        capture = self.get_piece(end_row, end_col) is not None
+        captured_piece = self.get_piece(end_row, end_col)
+        capture = captured_piece is not None
         pawn_move = isinstance(piece, Pawn)
         castling = isinstance(piece, King) and abs(end_col - start_col) == 2
         en_passant_capture = False
@@ -196,9 +199,13 @@ class Board:
             direction = -1 if piece.color == "white" else 1
             if (end_row, end_col) == previous_en_passant and self.get_piece(end_row, end_col) is None:
                 captured_row = end_row - direction
+                captured_piece = self.get_piece(captured_row, end_col)
                 self.set_piece(captured_row, end_col, None)
                 capture = True
                 en_passant_capture = True
+
+        if captured_piece is not None:
+            self.captured[captured_piece.color].append(captured_piece)
 
         self.set_piece(end_row, end_col, piece)
         self.set_piece(start_row, start_col, None)
@@ -355,6 +362,39 @@ class Board:
 
     def is_fifty_move_rule(self):
         return self.halfmove_clock >= 100
+
+    def revive_captured(self, color, count):
+        if count <= 0 or not self.captured[color]:
+            return 0
+
+        restored = 0
+        candidates = self._home_squares(color)
+        while restored < count and self.captured[color]:
+            piece = self.captured[color].pop()
+            placed = False
+            for row, col in candidates:
+                if self.get_piece(row, col) is None:
+                    self.set_piece(row, col, piece)
+                    placed = True
+                    restored += 1
+                    break
+            if not placed:
+                self.captured[color].append(piece)
+                break
+
+        return restored
+
+    def _home_squares(self, color):
+        if color == "white":
+            rows = [7, 6]
+        else:
+            rows = [0, 1]
+
+        squares = []
+        for row in rows:
+            for col in range(self.size):
+                squares.append((row, col))
+        return squares
     
 
 

@@ -33,10 +33,12 @@ class Renderer:
         hand=None,
         selected_card_index=None,
         show_play=False,
+        animation=None,
     ):
         self._draw_status(screen, turn)
         panel_y = self._draw_side_panel(screen, status_lines, moves)
         self._draw_hand(screen, hand, selected_card_index, show_play, panel_y)
+        self._draw_card_animation(screen, animation)
         board_size = self.board.size
         for row in range(board_size):
             for col in range(board_size):
@@ -177,6 +179,30 @@ class Renderer:
         if play_rect and play_rect.collidepoint(pos):
             return True
         return False
+
+    def _draw_card_animation(self, screen, animation):
+        if not animation:
+            return
+
+        progress = max(0.0, min(1.0, animation.get("progress", 1.0)))
+        name = animation.get("name", "")
+
+        x = self.margin + self.board.size * self.cell_size + 10
+        base_y = self.margin + 10
+        y = base_y - int(20 * progress)
+        rect = pygame.Rect(x, y, self.panel_width - 20, 48)
+
+        alpha = int(255 * (1.0 - progress))
+        surface = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
+        surface.fill((80, 80, 120, alpha))
+        pygame.draw.rect(surface, (160, 160, 190, alpha), surface.get_rect(), 2)
+
+        label = self.card_font.render(f"Played: {name}", True, (240, 240, 240))
+        label.set_alpha(alpha)
+        label_rect = label.get_rect(center=(rect.width / 2, rect.height / 2))
+        surface.blit(label, label_rect)
+
+        screen.blit(surface, rect.topleft)
 
     def square_from_mouse(self, pos):
         x, y = pos

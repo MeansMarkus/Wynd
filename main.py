@@ -1,8 +1,6 @@
 from cards.card import Deck
-from cards.plus_four import PlusFourCard
 from cards.plus_two import PlusTwoCard
 from cards.reverse import ReverseCard
-from cards.skip import SkipCard
 from game.board import Board
 from game.game_manager import GameManager
 from game.game_state import GameState
@@ -13,9 +11,7 @@ from players.player import Player
 def build_deck():
     cards = []
     cards.extend(ReverseCard() for _ in range(4))
-    cards.extend(SkipCard() for _ in range(4))
     cards.extend(PlusTwoCard() for _ in range(4))
-    cards.extend(PlusFourCard() for _ in range(2))
     return Deck(cards)
 
 

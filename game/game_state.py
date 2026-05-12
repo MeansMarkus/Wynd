@@ -4,3 +4,4 @@ class GameState:
 		self.players = players
 		self.turn_manager = turn_manager
 		self.deck = deck
+		self.moves_left = 1

@@ -3,10 +3,8 @@ import sys
 import pygame
 
 from cards.card import Deck
-from cards.plus_four import PlusFourCard
 from cards.plus_two import PlusTwoCard
 from cards.reverse import ReverseCard
-from cards.skip import SkipCard
 from game.board import Board
 from game.game_state import GameState
 from game.turn_manager import TurnManager
@@ -17,9 +15,7 @@ from ui.renderer import Renderer
 def build_deck():
     cards = []
     cards.extend(ReverseCard() for _ in range(4))
-    cards.extend(SkipCard() for _ in range(4))
     cards.extend(PlusTwoCard() for _ in range(4))
-    cards.extend(PlusFourCard() for _ in range(2))
     return Deck(cards)
 
 
@@ -45,6 +41,7 @@ def main():
     running = True
     selected = None
     selected_card_index = None
+    card_animation = None
     turn_started = True
 
     while running:
@@ -54,6 +51,7 @@ def main():
         if turn_started:
             if len(player.hand) < 5:
                 player.draw(deck)
+            state.moves_left = 1
             turn_started = False
 
         for event in pygame.event.get():
@@ -70,12 +68,15 @@ def main():
                 ):
                     if selected_card_index is not None:
                         try:
-                            player.play_card(selected_card_index, state)
+                            card = player.play_card(selected_card_index, state)
+                            card_animation = {
+                                "name": str(card),
+                                "start": pygame.time.get_ticks(),
+                                "duration": 900,
+                            }
                         except ValueError:
                             pass
                         selected_card_index = None
-                        turn_manager.advance()
-                        turn_started = True
                         selected = None
                         continue
 
@@ -105,14 +106,17 @@ def main():
                     end = board.coords_to_square(clicked[0], clicked[1])
                     try:
                         board.move_piece(start, end, turn)
-                        turn_manager.advance()
-                        turn_started = True
+                        state.moves_left -= 1
+                        if state.moves_left <= 0:
+                            turn_manager.advance()
+                            turn_started = True
                     except ValueError:
                         pass
                     selected = None
 
         status_lines = []
         status_lines.append(f"Legal moves: {board.count_legal_moves(turn)}")
+        status_lines.append(f"Moves left: {state.moves_left}")
         if is_checkmate:
             winner = "white" if turn == "black" else "black"
             status_lines.append(f"Checkmate: {winner} wins")
@@ -120,6 +124,17 @@ def main():
             status_lines.append("Check")
 
         screen.fill((20, 20, 20))
+        animation_payload = None
+        if card_animation:
+            elapsed = pygame.time.get_ticks() - card_animation["start"]
+            if elapsed > card_animation["duration"]:
+                card_animation = None
+            else:
+                animation_payload = {
+                    "name": card_animation["name"],
+                    "progress": elapsed / card_animation["duration"],
+                }
+
         renderer.draw(
             screen,
             selected=selected,
@@ -129,6 +144,7 @@ def main():
             hand=player.hand,
             selected_card_index=selected_card_index,
             show_play=True,
+            animation=animation_payload,
         )
         pygame.display.flip()
         clock.tick(60)

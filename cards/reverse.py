@@ -5,4 +5,4 @@ class ReverseCard(Card):
 	name = "Reverse"
 
 	def apply(self, game_state, player):
-		game_state.turn_manager.reverse()
+		game_state.turn_manager.swap_colors()

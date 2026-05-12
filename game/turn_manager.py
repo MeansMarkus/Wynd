@@ -22,3 +22,11 @@ class TurnManager:
 
 	def skip_next(self, count=1):
 		self.skip += count
+
+	def swap_colors(self):
+		if len(self.players) != 2:
+			return
+		self.players[0].color, self.players[1].color = (
+			self.players[1].color,
+			self.players[0].color,
+		)
