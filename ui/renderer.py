@@ -12,8 +12,10 @@ class Renderer:
         self.highlight = (246, 246, 105)
         self.text_color = (20, 20, 20)
         self.font = pygame.font.SysFont("Segoe UI", 36, bold=True)
+        self.status_font = pygame.font.SysFont("Segoe UI", 20, bold=True)
 
-    def draw(self, screen, selected=None):
+    def draw(self, screen, selected=None, turn=None):
+        self._draw_status(screen, turn)
         board_size = self.board.size
         for row in range(board_size):
             for col in range(board_size):
@@ -42,6 +44,12 @@ class Renderer:
                         center=(x + self.cell_size / 2, y + self.cell_size / 2)
                     )
                     screen.blit(label, label_rect)
+
+    def _draw_status(self, screen, turn):
+        if not turn:
+            return
+        label = self.status_font.render(f"Turn: {turn}", True, (230, 230, 230))
+        screen.blit(label, (self.margin, 10))
 
     def square_from_mouse(self, pos):
         x, y = pos

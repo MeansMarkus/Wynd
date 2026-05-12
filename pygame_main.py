@@ -49,7 +49,7 @@ def main():
                     selected = None
 
         screen.fill((20, 20, 20))
-        renderer.draw(screen, selected=selected)
+        renderer.draw(screen, selected=selected, turn=turn)
         pygame.display.flip()
         clock.tick(60)
 
