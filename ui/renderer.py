@@ -10,7 +10,9 @@ class Renderer:
         self.light = (238, 238, 210)
         self.grid = (30, 30, 30)
         self.highlight = (246, 246, 105)
-        self.text_color = (20, 20, 20)
+        self.white_piece = (245, 245, 245)
+        self.black_piece = (30, 30, 30)
+        self.outline = (15, 15, 15)
         self.font = pygame.font.SysFont("Segoe UI", 36, bold=True)
         self.status_font = pygame.font.SysFont("Segoe UI", 20, bold=True)
 
@@ -39,10 +41,15 @@ class Renderer:
 
                 piece = self.board.get_piece(row, col)
                 if piece:
-                    label = self.font.render(piece.get_symbol(), True, self.text_color)
+                    color = self.white_piece if piece.color == "white" else self.black_piece
+                    label = self.font.render(piece.get_symbol(), True, color)
                     label_rect = label.get_rect(
                         center=(x + self.cell_size / 2, y + self.cell_size / 2)
                     )
+                    if piece.color == "white":
+                        outline = self.font.render(piece.get_symbol(), True, self.outline)
+                        outline_rect = outline.get_rect(center=label_rect.center)
+                        screen.blit(outline, outline_rect.move(1, 1))
                     screen.blit(label, label_rect)
 
     def _draw_status(self, screen, turn):
